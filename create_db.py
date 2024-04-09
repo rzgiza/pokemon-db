@@ -80,7 +80,7 @@ SELECT (body->'id')::int as id,
 	   (body->'stats'->3->'base_stat')::numeric,
 	   (body->'stats'->4->'base_stat')::numeric,
 	   (body->'stats'->5->'base_stat')::numeric,
-		translate(jsonb_path_query_array(body->'types', '$.type.name')::text, '[]', '{}')::text[]
+	    translate(jsonb_path_query_array(body->'types', '$.type.name')::text, '[]', '{}')::text[]
 FROM js_pokemon ORDER BY id ASC;
 """
 cur.execute(sql)
