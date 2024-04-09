@@ -1,4 +1,4 @@
-# Drop all tables created from papi.py
+# Drop all tables created from create_db.py
 
 import psycopg2
 import hidden
