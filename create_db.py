@@ -2,9 +2,7 @@
 # Pulls data from the https://pokeapi.co API and creates a Pokemon database
 import psycopg2
 import hidden
-from concurrent.futures import as_completed
-from requests_futures.sessions import FuturesSession
-from pprint import pprint
+from get_url import get_url
 
 
 # Load the secrets
@@ -27,9 +25,16 @@ DROP TABLE IF EXISTS pokedex;
 cur.execute(sql)
 print(sql)
 
+conn.commit()
+
 sql = """
 CREATE TABLE IF NOT EXISTS js_pokemon (
-    id INTEGER, 
+    id INTEGER PRIMARY KEY, 
+    body JSONB
+);
+
+CREATE TABLE IF NOT EXISTS js_species (
+    id INTEGER PRIMARY KEY, 
     body JSONB
 );
 
@@ -42,25 +47,14 @@ CREATE TABLE IF NOT EXISTS pokedex (
 cur.execute(sql)
 print(sql)
 
+conn.commit()
+
 print("Async scraping pokemon data from: https://pokeapi.co/api/v2/pokemon/")
 print("Results dumped into js_pokemon for further processing.")
 
-futures = []
-id_texts = []
-with FuturesSession(max_workers=10) as session:
-    for i in range(1, 1026):
-        url = 'https://pokeapi.co/api/v2/pokemon/' + str(i)
-        future = session.get(url)
-        future.i = i
-        futures.append(future)
-
-    for future in as_completed(futures):
-        response = future.result()
-        pprint({'pokemon_id': future.i})
-        id_texts.append((future.i, response.text))
-
-args = ','.join([cur.mogrify("(%s,%s)", tup).decode('utf-8') for tup in id_texts])
-cur.execute("INSERT INTO js_pokemon VALUES " + args)
+id_texts = get_url('https://pokeapi.co/api/v2/pokemon/', 1025)
+values = ','.join([cur.mogrify("(%s,%s)", tup).decode('utf-8') for tup in id_texts])
+cur.execute("INSERT INTO js_pokemon VALUES " + values)
 
 conn.commit()
 
