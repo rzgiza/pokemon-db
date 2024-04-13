@@ -18,6 +18,7 @@ cur = conn.cursor()
 sql = """
 DROP TABLE IF EXISTS js_pokemon;
 DROP TABLE IF EXISTS js_species;
+DROP TABLE IF EXISTS js_types;
 DROP TABLE IF EXISTS pokedex;
 """
 cur.execute(sql)
