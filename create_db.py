@@ -20,6 +20,7 @@ print("Connection opened to PGSQL database.")
 
 sql = """
 DROP TABLE IF EXISTS js_pokemon;
+DROP TABLE IF EXISTS js_species;
 DROP TABLE IF EXISTS pokedex;
 """
 cur.execute(sql)
