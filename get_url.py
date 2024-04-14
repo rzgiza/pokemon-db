@@ -21,8 +21,11 @@ def get_url(url_path, index=None):
 
             for future in as_completed(futures):
                 response = future.result()
-                pprint({'id': future.i, 'url': future.geturl})
-                id_texts.append((future.i, response.text))
+                if response.status_code == 200:
+                    pprint({'id': future.i, 'url': future.geturl})
+                    id_texts.append((future.i, response.text))
+                else:
+                    pprint({'id': future.i, 'status': response.status_code, 'error': response.text, 'url': future.geturl})
     else:
         try:
             _ = int(index)
@@ -41,7 +44,10 @@ def get_url(url_path, index=None):
 
             for future in as_completed(futures):
                 response = future.result()
-                pprint({'id': future.i, 'url': future.geturl})
-                id_texts.append((future.i, response.text))
+                if response.status_code == 200:
+                    pprint({'id': future.i, 'url': future.geturl})
+                    id_texts.append((future.i, response.text))
+                else:
+                    pprint({'id': future.i, 'status': response.status_code, 'error': response.text, 'url': future.geturl})
 
     return id_texts

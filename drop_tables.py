@@ -19,6 +19,7 @@ sql = """
 DROP TABLE IF EXISTS js_pokemon;
 DROP TABLE IF EXISTS js_species;
 DROP TABLE IF EXISTS js_types;
+DROP TABLE IF EXISTS js_evo;
 DROP TABLE IF EXISTS pokedex;
 """
 cur.execute(sql)

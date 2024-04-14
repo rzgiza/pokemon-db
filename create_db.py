@@ -25,6 +25,7 @@ sql = """
 DROP TABLE IF EXISTS js_pokemon;
 DROP TABLE IF EXISTS js_species;
 DROP TABLE IF EXISTS js_types;
+DROP TABLE IF EXISTS js_evo;
 DROP TABLE IF EXISTS pokedex;
 """
 cur.execute(sql)
@@ -48,6 +49,11 @@ CREATE TABLE IF NOT EXISTS js_types (
     body JSONB
 );
 
+CREATE TABLE IF NOT EXISTS js_evo (
+    id INTEGER PRIMARY KEY, 
+    body JSONB
+);
+
 CREATE TABLE IF NOT EXISTS pokedex (
     id INTEGER PRIMARY KEY, name VARCHAR(20) UNIQUE, height NUMERIC, weight NUMERIC, hp NUMERIC,
     attack NUMERIC, defense NUMERIC, s_attack NUMERIC, s_defense NUMERIC, speed NUMERIC, 
@@ -60,9 +66,9 @@ print(sql)
 conn.commit()
 
 url_paths = ['https://pokeapi.co/api/v2/pokemon/', 'https://pokeapi.co/api/v2/pokemon-species/',
-             'https://pokeapi.co/api/v2/type/']
-json_tables = ['js_pokemon', 'js_species', 'js_types']
-indexes = [NUM_OF_POKE, NUM_OF_POKE, None]
+             'https://pokeapi.co/api/v2/type/', 'https://pokeapi.co/api/v2/evolution-chain/']
+json_tables = ['js_pokemon', 'js_species', 'js_types', 'js_evo']
+indexes = [NUM_OF_POKE, NUM_OF_POKE, None, 549]
 for i in range(len(url_paths)):
     id_texts = get_url(url_paths[i], indexes[i])
     values = ','.join([cur.mogrify("(%s,%s)", tup).decode('utf-8') for tup in id_texts])
