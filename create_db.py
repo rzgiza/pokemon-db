@@ -35,23 +35,19 @@ conn.commit()
 
 sql = """
 CREATE TABLE IF NOT EXISTS js_pokemon (
-    id INTEGER PRIMARY KEY, 
-    body JSONB
+    id INTEGER PRIMARY KEY, body JSONB
 );
 
 CREATE TABLE IF NOT EXISTS js_species (
-    id INTEGER PRIMARY KEY, 
-    body JSONB
+    id INTEGER PRIMARY KEY, body JSONB
 );
 
 CREATE TABLE IF NOT EXISTS js_types (
-    id INTEGER PRIMARY KEY, 
-    body JSONB
+    id INTEGER PRIMARY KEY, body JSONB
 );
 
 CREATE TABLE IF NOT EXISTS js_evo (
-    id INTEGER PRIMARY KEY, 
-    body JSONB
+    id INTEGER PRIMARY KEY, body JSONB
 );
 
 CREATE TABLE IF NOT EXISTS pokedex (
@@ -78,20 +74,32 @@ conn.commit()
 
 sql = """
 INSERT INTO pokedex (
-    id, name, height, weight, hp, attack, defense, s_attack, s_defense, speed, type
+    id, name, height, weight, hp, attack, defense, s_attack, s_defense, speed, type, evo_set
 )
-SELECT (body->'id')::int as id, 
-        body->'species'->>'name',
-       (body->'height')::numeric,
-       (body->'weight')::numeric, 
-       (body->'stats'->0->'base_stat')::numeric,
-       (body->'stats'->1->'base_stat')::numeric,
-       (body->'stats'->2->'base_stat')::numeric,
-       (body->'stats'->3->'base_stat')::numeric,
-       (body->'stats'->4->'base_stat')::numeric,
-       (body->'stats'->5->'base_stat')::numeric,
-        translate(jsonb_path_query_array(body->'types', '$.type.name')::text, '[]', '{}')::text[]
-FROM js_pokemon ORDER BY id ASC;
+SELECT pd.*, es.evo_set 
+FROM (
+    SELECT (body->'id')::int as id, 
+            body->'species'->>'name' as name,
+           (body->'height')::numeric,
+           (body->'weight')::numeric, 
+           (body->'stats'->0->'base_stat')::numeric,
+           (body->'stats'->1->'base_stat')::numeric,
+           (body->'stats'->2->'base_stat')::numeric,
+           (body->'stats'->3->'base_stat')::numeric,
+           (body->'stats'->4->'base_stat')::numeric,
+           (body->'stats'->5->'base_stat')::numeric,
+            translate(jsonb_path_query_array(body->'types', '$.type.name')::text, '[]', '{}')::text[]
+    FROM js_pokemon
+) as pd
+LEFT JOIN (
+    SELECT (body->'id')::int as evo_set, 
+           unnest(translate((jsonb_path_query_array(body->'chain', '$.species.name') || 
+                  jsonb_path_query_array(body->'chain', '$.*.species.name') || 
+                  jsonb_path_query_array(body->'chain', '$.*.*.species.name'))::text, '[]', '{}')::text[]) as name
+    FROM js_evo
+) as es 
+    ON pd.name = es.name
+ORDER BY pd.id;
 """
 cur.execute(sql)
 print(sql)
