@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS js_evo (
 CREATE TABLE IF NOT EXISTS pokedex (
     id INTEGER PRIMARY KEY, name VARCHAR(20) UNIQUE, height NUMERIC, weight NUMERIC, hp NUMERIC,
     attack NUMERIC, defense NUMERIC, s_attack NUMERIC, s_defense NUMERIC, speed NUMERIC, 
-    type TEXT [], info TEXT, evo_set INTEGER
+    type TEXT [], evo_set INTEGER, info TEXT
 );
 """
 cur.execute(sql)
@@ -72,11 +72,26 @@ for i in range(len(url_paths)):
 
 conn.commit()
 
-sql = """
-INSERT INTO pokedex (
-    id, name, height, weight, hp, attack, defense, s_attack, s_defense, speed, type, evo_set
+sql = r"""
+WITH cte AS (
+	SELECT 
+		(body->'id')::int as id, 
+		 unnest(translate(jsonb_path_query_array(body->'flavor_text_entries', 
+		        '$.language.name')::text, '[]', '{}')::text[]) as language,
+		 unnest(translate(regexp_replace(jsonb_path_query_array(body->'flavor_text_entries', 
+		        '$.flavor_text')::text, '\\n|\\f', ' ', 'g'), '[]', '{}')::text[]) as info
+	FROM js_species
+), rownum AS (
+	SELECT row_number() over(order by (select NULL)) as rn, * FROM cte
+), engchk AS (
+	SELECT row_number() over(partition by id order by rn) as first_eng, * FROM rownum
+), infotb AS (
+	SELECT rank() over(partition by id order by first_eng) as rk, * FROM engchk WHERE language = 'en'
 )
-SELECT pd.*, es.evo_set 
+INSERT INTO pokedex (
+    id, name, height, weight, hp, attack, defense, s_attack, s_defense, speed, type, evo_set, info
+)
+SELECT pd.*, es.evo_set, it.info
 FROM (
     SELECT (body->'id')::int as id, 
             body->'species'->>'name' as name,
@@ -90,15 +105,17 @@ FROM (
            (body->'stats'->5->'base_stat')::numeric,
             translate(jsonb_path_query_array(body->'types', '$.type.name')::text, '[]', '{}')::text[]
     FROM js_pokemon
-) as pd
+) AS pd
 LEFT JOIN (
     SELECT (body->'id')::int as evo_set, 
-           unnest(translate((jsonb_path_query_array(body->'chain', '$.species.name') || 
-                  jsonb_path_query_array(body->'chain', '$.*.species.name') || 
-                  jsonb_path_query_array(body->'chain', '$.*.*.species.name'))::text, '[]', '{}')::text[]) as name
+            unnest(translate((jsonb_path_query_array(body->'chain', '$.species.name') || 
+                   jsonb_path_query_array(body->'chain', '$.*.species.name') || 
+                   jsonb_path_query_array(body->'chain', '$.*.*.species.name'))::text, '[]', '{}')::text[]) as name
     FROM js_evo
-) as es 
+) AS es 
     ON pd.name = es.name
+LEFT JOIN (SELECT id, info FROM infotb WHERE rk = 1) AS it 
+	ON pd.id = it.id
 ORDER BY pd.id;
 """
 cur.execute(sql)
