@@ -74,19 +74,19 @@ conn.commit()
 
 sql = r"""
 WITH cte AS (
-	SELECT 
-		(body->'id')::int as id, 
-		 unnest(translate(jsonb_path_query_array(body->'flavor_text_entries', 
-		        '$.language.name')::text, '[]', '{}')::text[]) as language,
-		 unnest(translate(regexp_replace(jsonb_path_query_array(body->'flavor_text_entries', 
-		        '$.flavor_text')::text, '\\n|\\f', ' ', 'g'), '[]', '{}')::text[]) as info
-	FROM js_species
+    SELECT 
+        (body->'id')::int as id, 
+         unnest(translate(jsonb_path_query_array(body->'flavor_text_entries', 
+                '$.language.name')::text, '[]', '{}')::text[]) as language,
+         unnest(translate(regexp_replace(jsonb_path_query_array(body->'flavor_text_entries', 
+                '$.flavor_text')::text, '\\n|\\f', ' ', 'g'), '[]', '{}')::text[]) as info
+    FROM js_species
 ), rownum AS (
-	SELECT row_number() over(order by (select NULL)) as rn, * FROM cte
+    SELECT row_number() over(order by (select NULL)) as rn, * FROM cte
 ), engchk AS (
-	SELECT row_number() over(partition by id order by rn) as first_eng, * FROM rownum
+    SELECT row_number() over(partition by id order by rn) as first_eng, * FROM rownum
 ), infotb AS (
-	SELECT rank() over(partition by id order by first_eng) as rk, * FROM engchk WHERE language = 'en'
+    SELECT rank() over(partition by id order by first_eng) as rk, * FROM engchk WHERE language = 'en'
 )
 INSERT INTO pokedex (
     id, name, height, weight, hp, attack, defense, s_attack, s_defense, speed, type, evo_set, info
@@ -115,7 +115,7 @@ LEFT JOIN (
 ) AS es 
     ON pd.name = es.name
 LEFT JOIN (SELECT id, info FROM infotb WHERE rk = 1) AS it 
-	ON pd.id = it.id
+    ON pd.id = it.id
 ORDER BY pd.id;
 """
 cur.execute(sql)
