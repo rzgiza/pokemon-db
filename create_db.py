@@ -10,14 +10,8 @@ NUM_OF_POKE = 1025
 
 # Load the secrets
 secrets = hidden.secrets()
-conn = psycopg2.connect(
-    host=secrets['host'],
-    port=secrets['port'],
-    database=secrets['database'],
-    user=secrets['user'],
-    password=secrets['pass'],
-    connect_timeout=3
-)
+conn = psycopg2.connect(host=secrets['host'], port=secrets['port'], database=secrets['database'],
+                        user=secrets['user'], password=secrets['pass'], connect_timeout=3)
 cur = conn.cursor()
 print("Connection opened to PGSQL database.")
 
@@ -27,6 +21,9 @@ DROP TABLE IF EXISTS js_species;
 DROP TABLE IF EXISTS js_types;
 DROP TABLE IF EXISTS js_evo;
 DROP TABLE IF EXISTS pokedex;
+DROP TABLE IF EXISTS types;
+DROP TABLE IF EXISTS pokemon_moves;
+DROP TABLE IF EXISTS pokemon_abilities;
 """
 cur.execute(sql)
 print(sql)
@@ -34,26 +31,28 @@ print(sql)
 conn.commit()
 
 sql = """
-CREATE TABLE IF NOT EXISTS js_pokemon (
-    id INTEGER PRIMARY KEY, body JSONB
-);
+CREATE TABLE IF NOT EXISTS js_pokemon (id INTEGER PRIMARY KEY, body JSONB);
 
-CREATE TABLE IF NOT EXISTS js_species (
-    id INTEGER PRIMARY KEY, body JSONB
-);
+CREATE TABLE IF NOT EXISTS js_species (id INTEGER PRIMARY KEY, body JSONB);
 
-CREATE TABLE IF NOT EXISTS js_types (
-    id INTEGER PRIMARY KEY, body JSONB
-);
+CREATE TABLE IF NOT EXISTS js_types (id INTEGER PRIMARY KEY, body JSONB);
 
-CREATE TABLE IF NOT EXISTS js_evo (
-    id INTEGER PRIMARY KEY, body JSONB
-);
+CREATE TABLE IF NOT EXISTS js_evo (id INTEGER PRIMARY KEY, body JSONB);
 
 CREATE TABLE IF NOT EXISTS pokedex (
     id INTEGER PRIMARY KEY, name VARCHAR(20) UNIQUE, height NUMERIC, weight NUMERIC, hp NUMERIC,
     attack NUMERIC, defense NUMERIC, s_attack NUMERIC, s_defense NUMERIC, speed NUMERIC, 
     type TEXT [], evo_set INTEGER, info TEXT
+);
+
+CREATE TABLE IF NOT EXISTS types (id INTEGER PRIMARY KEY, name VARCHAR(20) UNIQUE);
+
+CREATE TABLE IF NOT EXISTS pokemon_moves (
+    poke_id INTEGER, move_id INTEGER, PRIMARY KEY (poke_id, move_id), UNIQUE (move_id, poke_id)
+);
+
+CREATE TABLE IF NOT EXISTS pokemon_abilities (
+    poke_id INTEGER, ability_id INTEGER, PRIMARY KEY (poke_id, ability_id), UNIQUE (ability_id, poke_id)
 );
 """
 cur.execute(sql)

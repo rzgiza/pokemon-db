@@ -2,6 +2,7 @@
 import psycopg2
 import hidden
 
+
 # Load the secrets
 secrets = hidden.secrets()
 
@@ -21,6 +22,9 @@ DROP TABLE IF EXISTS js_species;
 DROP TABLE IF EXISTS js_types;
 DROP TABLE IF EXISTS js_evo;
 DROP TABLE IF EXISTS pokedex;
+DROP TABLE IF EXISTS types;
+DROP TABLE IF EXISTS pokemon_moves;
+DROP TABLE IF EXISTS pokemon_abilities;
 """
 cur.execute(sql)
 print(sql)

@@ -1,8 +1,8 @@
 # Credentials to connect to postgresql database
-
 import json
 
-f = open("/home/rzg/Documents/sql_notes/pkmon_credentials.txt")
+
+f = open("/home/rzg/Documents/postgres/pokemon/credentials.json")
 cred = json.load(f)
 
 
