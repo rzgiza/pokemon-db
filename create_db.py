@@ -5,16 +5,17 @@ import hidden
 from get_url import get_url
 
 
-#Number of Pokemon desired (or list possible)
+# Number of Pokemon desired (or list/iterable object of integers [1:1025] possible)
 NUM_OF_POKE = 1025
 
-# Load the secrets
+# Load the credentials, connect to PGSQL database, and create cursor
 secrets = hidden.secrets()
 conn = psycopg2.connect(host=secrets['host'], port=secrets['port'], database=secrets['database'],
                         user=secrets['user'], password=secrets['pass'], connect_timeout=3)
 cur = conn.cursor()
 print("Connection opened to PGSQL database.")
 
+# Drop existing tables created in this program to start from scratch.
 sql = """
 DROP TABLE IF EXISTS js_pokemon;
 DROP TABLE IF EXISTS js_species;
@@ -30,6 +31,7 @@ print(sql)
 
 conn.commit()
 
+# Create json helper tables (js_<name>) and final database tables
 sql = """
 CREATE TABLE IF NOT EXISTS js_pokemon (id INTEGER PRIMARY KEY, body JSONB);
 
@@ -60,6 +62,7 @@ print(sql)
 
 conn.commit()
 
+# Get initial json data from pokeapi and insert into json tables (js_<name>)
 url_paths = ['https://pokeapi.co/api/v2/pokemon/', 'https://pokeapi.co/api/v2/pokemon-species/',
              'https://pokeapi.co/api/v2/type/', 'https://pokeapi.co/api/v2/evolution-chain/']
 json_tables = ['js_pokemon', 'js_species', 'js_types', 'js_evo']
@@ -71,6 +74,7 @@ for i in range(len(url_paths)):
 
 conn.commit()
 
+# Insert data into the pokedex table
 sql = r"""
 WITH cte AS (
     SELECT (body->'id')::int as id, 
@@ -115,6 +119,17 @@ LEFT JOIN (
 LEFT JOIN (SELECT id, info FROM infotb WHERE rk = 1) AS it 
     ON pd.id = it.id
 ORDER BY pd.id;
+"""
+cur.execute(sql)
+print(sql)
+
+# Insert data into the types table
+sql = r"""
+INSERT INTO types (id, name)
+SELECT substring(unnest(translate(jsonb_path_query_array(body->'results', '$.url')::text, 
+                 '[]', '{}')::text[]) from '.+/([0-9]+)/$')::int as id,
+       unnest(translate(jsonb_path_query_array(body->'results', '$.name')::text, '[]', '{}')::text[]) as name
+FROM js_types; 
 """
 cur.execute(sql)
 print(sql)
