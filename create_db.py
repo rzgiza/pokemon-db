@@ -79,10 +79,10 @@ conn.commit()
 sql = r"""
 WITH cte AS (
     SELECT (body->'id')::int as id, 
-            unnest(translate(jsonb_path_query_array(body->'flavor_text_entries', 
-                   '$.language.name')::text, '[]', '{}')::text[]) as language,
-            unnest(translate(regexp_replace(jsonb_path_query_array(body->'flavor_text_entries', 
-                   '$.flavor_text')::text, '\\n|\\f', ' ', 'g'), '[]', '{}')::text[]) as info
+            unnest(translate(jsonb_path_query_array(body->'flavor_text_entries', '$.language.name')::text, 
+                   '[]', '{}')::text[]) as language,
+            unnest(translate(regexp_replace(jsonb_path_query_array(body->'flavor_text_entries', '$.flavor_text')::text, 
+                   '\\n|\\f', ' ', 'g'), '[]', '{}')::text[]) as info
     FROM js_species
 ), rownum AS (
     SELECT row_number() over(order by (select NULL)) as rn, * FROM cte
@@ -151,8 +151,8 @@ print(sql)
 sql = r"""
 INSERT INTO pokemon_abilities (poke_id, ability_id)
 SELECT DISTINCT (body->'id')::int,
-        substring(unnest(translate(jsonb_path_query_array(body->'abilities', '$.ability.url')::text, 
-                  '[]', '{}')::text[]) from '.+/([0-9]+)/$')::int
+                 substring(unnest(translate(jsonb_path_query_array(body->'abilities', '$.ability.url')::text, 
+                           '[]', '{}')::text[]) from '.+/([0-9]+)/$')::int
 FROM js_pokemon;
 """
 cur.execute(sql)
