@@ -127,9 +127,31 @@ print(sql)
 sql = r"""
 INSERT INTO types (id, name)
 SELECT substring(unnest(translate(jsonb_path_query_array(body->'results', '$.url')::text, 
-                 '[]', '{}')::text[]) from '.+/([0-9]+)/$')::int as id,
-       unnest(translate(jsonb_path_query_array(body->'results', '$.name')::text, '[]', '{}')::text[]) as name
+                 '[]', '{}')::text[]) from '.+/([0-9]+)/$')::int,
+       unnest(translate(jsonb_path_query_array(body->'results', '$.name')::text, '[]', '{}')::text[])
 FROM js_types; 
+"""
+cur.execute(sql)
+print(sql)
+
+# Insert data into the pokemon_moves table
+sql = r"""
+INSERT INTO pokemon_moves (poke_id, move_id)
+SELECT (body->'id')::int,
+        substring(unnest(translate(jsonb_path_query_array(body->'moves', '$.move.url')::text, 
+                  '[]', '{}')::text[]) from '.+/([0-9]+)/$')::int
+FROM js_pokemon;
+"""
+cur.execute(sql)
+print(sql)
+
+# Insert data into the pokemon_abilities table
+sql = r"""
+INSERT INTO pokemon_abilities (poke_id, ability_id)
+SELECT (body->'id')::int,
+        substring(unnest(translate(jsonb_path_query_array(body->'abilities', '$.ability.url')::text, 
+                  '[]', '{}')::text[]) from '.+/([0-9]+)/$')::int
+FROM js_pokemon;
 """
 cur.execute(sql)
 print(sql)
