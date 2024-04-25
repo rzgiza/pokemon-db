@@ -63,6 +63,7 @@ print(sql)
 conn.commit()
 
 # Get initial json data from pokeapi and insert into json tables (js_<name>)
+# Note some pages in evolution-chain data are missing from api (look at page = 210), data is still complete though
 url_paths = ['https://pokeapi.co/api/v2/pokemon/', 'https://pokeapi.co/api/v2/pokemon-species/',
              'https://pokeapi.co/api/v2/type/', 'https://pokeapi.co/api/v2/evolution-chain/']
 json_tables = ['js_pokemon', 'js_species', 'js_types', 'js_evo']
@@ -74,7 +75,7 @@ for i in range(len(url_paths)):
 
 conn.commit()
 
-# Insert data into the pokedex table
+# Insert data into the pokedex table from js_pokemon, js_evo, js_species
 sql = r"""
 WITH cte AS (
     SELECT (body->'id')::int as id, 
@@ -123,7 +124,7 @@ ORDER BY pd.id;
 cur.execute(sql)
 print(sql)
 
-# Insert data into the types table
+# Insert data into the types table from js_types
 sql = r"""
 INSERT INTO types (id, name)
 SELECT substring(unnest(translate(jsonb_path_query_array(body->'results', '$.url')::text, 
@@ -134,7 +135,7 @@ FROM js_types;
 cur.execute(sql)
 print(sql)
 
-# Insert data into the pokemon_moves table
+# Insert data into the pokemon_moves table from js_pokemon
 sql = r"""
 INSERT INTO pokemon_moves (poke_id, move_id)
 SELECT (body->'id')::int,
@@ -145,10 +146,11 @@ FROM js_pokemon;
 cur.execute(sql)
 print(sql)
 
-# Insert data into the pokemon_abilities table
+# Insert data into the pokemon_abilities table from js_pokemon
+# Some Pokemon have duplicate abilities listed so SELECT DISTINCT is used (look at pokemon_id = 948 or 949)
 sql = r"""
 INSERT INTO pokemon_abilities (poke_id, ability_id)
-SELECT (body->'id')::int,
+SELECT DISTINCT (body->'id')::int,
         substring(unnest(translate(jsonb_path_query_array(body->'abilities', '$.ability.url')::text, 
                   '[]', '{}')::text[]) from '.+/([0-9]+)/$')::int
 FROM js_pokemon;
