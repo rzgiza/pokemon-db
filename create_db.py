@@ -1,6 +1,7 @@
 # python3 create_db.py
 # Pulls data from the https://pokeapi.co API and creates a Pokemon database
 import psycopg2
+from psycopg2.extensions import AsIs
 import hidden
 from get_url import get_url
 
@@ -21,6 +22,8 @@ DROP TABLE IF EXISTS js_pokemon;
 DROP TABLE IF EXISTS js_species;
 DROP TABLE IF EXISTS js_types;
 DROP TABLE IF EXISTS js_evo;
+DROP TABLE IF EXISTS js_moves;
+DROP TABLE IF EXISTS js_abilities;
 DROP TABLE IF EXISTS pokedex;
 DROP TABLE IF EXISTS types;
 DROP TABLE IF EXISTS pokemon_moves;
@@ -34,25 +37,20 @@ conn.commit()
 # Create json helper tables (js_<name>) and final database tables
 sql = """
 CREATE TABLE IF NOT EXISTS js_pokemon (id INTEGER PRIMARY KEY, body JSONB);
-
 CREATE TABLE IF NOT EXISTS js_species (id INTEGER PRIMARY KEY, body JSONB);
-
 CREATE TABLE IF NOT EXISTS js_types (id INTEGER PRIMARY KEY, body JSONB);
-
 CREATE TABLE IF NOT EXISTS js_evo (id INTEGER PRIMARY KEY, body JSONB);
-
+CREATE TABLE IF NOT EXISTS js_moves (id INTEGER PRIMARY KEY, body JSONB);
+CREATE TABLE IF NOT EXISTS js_abilities (id INTEGER PRIMARY KEY, body JSONB);
 CREATE TABLE IF NOT EXISTS pokedex (
     id INTEGER PRIMARY KEY, name VARCHAR(20) UNIQUE, height NUMERIC, weight NUMERIC, hp NUMERIC,
     attack NUMERIC, defense NUMERIC, s_attack NUMERIC, s_defense NUMERIC, speed NUMERIC, 
     type TEXT [], evo_set INTEGER, info TEXT
 );
-
 CREATE TABLE IF NOT EXISTS types (id INTEGER PRIMARY KEY, name VARCHAR(20) UNIQUE);
-
 CREATE TABLE IF NOT EXISTS pokemon_moves (
     poke_id INTEGER, move_id INTEGER, PRIMARY KEY (poke_id, move_id), UNIQUE (move_id, poke_id)
 );
-
 CREATE TABLE IF NOT EXISTS pokemon_abilities (
     poke_id INTEGER, ability_id INTEGER, PRIMARY KEY (poke_id, ability_id), UNIQUE (ability_id, poke_id)
 );
@@ -71,7 +69,7 @@ indexes = [NUM_OF_POKE, NUM_OF_POKE, None, 549]
 for i in range(len(url_paths)):
     id_texts = get_url(url_paths[i], indexes[i])
     values = ','.join([cur.mogrify("(%s,%s)", tup).decode('utf-8') for tup in id_texts])
-    cur.execute("INSERT INTO " + json_tables[i] + " VALUES " + values)
+    cur.execute("INSERT INTO %s VALUES %s;", (AsIs(json_tables[i]), AsIs(values)))
 
 conn.commit()
 
@@ -157,6 +155,35 @@ FROM js_pokemon;
 """
 cur.execute(sql)
 print(sql)
+
+conn.commit()
+
+# Get move_ids from pokemon_moves table
+sql = r"SELECT DISTINCT move_id FROM pokemon_moves ORDER BY move_id;"
+cur.execute(sql)
+print(sql)
+move_ids = cur.fetchall()
+
+conn.commit()
+
+# Get ability_ids from pokemon_abilities table
+sql = r"SELECT DISTINCT ability_id FROM pokemon_abilities ORDER BY ability_id;"
+cur.execute(sql)
+print(sql)
+ability_ids = cur.fetchall()
+
+conn.commit()
+
+# Get final json data from pokeapi and insert into json tables (js_<name>)
+MOVES_INDEX = [x[0] for x in move_ids]
+ABILITIES_INDEX = [y[0] for y in ability_ids]
+url_paths = ['https://pokeapi.co/api/v2/move/', 'https://pokeapi.co/api/v2/ability/']
+json_tables = ['js_moves', 'js_abilities']
+indexes = [MOVES_INDEX, ABILITIES_INDEX]
+for i in range(len(url_paths)):
+    id_texts = get_url(url_paths[i], indexes[i])
+    values = ','.join([cur.mogrify("(%s,%s)", tup).decode('utf-8') for tup in id_texts])
+    cur.execute("INSERT INTO %s VALUES %s;", (AsIs(json_tables[i]), AsIs(values)))
 
 conn.commit()
 
