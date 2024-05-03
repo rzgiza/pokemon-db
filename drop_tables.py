@@ -9,7 +9,7 @@ conn = psycopg2.connect(host=secrets['host'], port=secrets['port'], database=sec
                         user=secrets['user'], password=secrets['pass'], connect_timeout=3)
 cur = conn.cursor()
 
-sql = """
+sql = r"""
 DROP TABLE IF EXISTS js_pokemon;
 DROP TABLE IF EXISTS js_species;
 DROP TABLE IF EXISTS js_types;
@@ -20,6 +20,10 @@ DROP TABLE IF EXISTS pokedex;
 DROP TABLE IF EXISTS types;
 DROP TABLE IF EXISTS pokemon_moves;
 DROP TABLE IF EXISTS pokemon_abilities;
+DROP TABLE IF EXISTS moves;
+DROP TABLE IF EXISTS abilities;
+DROP TABLE IF EXISTS trainer;
+DROP TABLE IF EXISTS trainer_moves;
 """
 cur.execute(sql)
 print(sql)

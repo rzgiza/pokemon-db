@@ -17,7 +17,7 @@ cur = conn.cursor()
 print("Connection opened to PGSQL database.")
 
 # Drop existing tables created in this program to start from scratch.
-sql = """
+sql = r"""
 DROP TABLE IF EXISTS js_pokemon;
 DROP TABLE IF EXISTS js_species;
 DROP TABLE IF EXISTS js_types;
@@ -28,6 +28,10 @@ DROP TABLE IF EXISTS pokedex;
 DROP TABLE IF EXISTS types;
 DROP TABLE IF EXISTS pokemon_moves;
 DROP TABLE IF EXISTS pokemon_abilities;
+DROP TABLE IF EXISTS moves;
+DROP TABLE IF EXISTS abilities;
+DROP TABLE IF EXISTS trainer;
+DROP TABLE IF EXISTS trainer_moves;
 """
 cur.execute(sql)
 print(sql)
@@ -35,7 +39,7 @@ print(sql)
 conn.commit()
 
 # Create json helper tables (js_<name>) and final database tables
-sql = """
+sql = r"""
 CREATE TABLE IF NOT EXISTS js_pokemon (id INTEGER PRIMARY KEY, body JSONB);
 CREATE TABLE IF NOT EXISTS js_species (id INTEGER PRIMARY KEY, body JSONB);
 CREATE TABLE IF NOT EXISTS js_types (id INTEGER PRIMARY KEY, body JSONB);
@@ -53,6 +57,19 @@ CREATE TABLE IF NOT EXISTS pokemon_moves (
 );
 CREATE TABLE IF NOT EXISTS pokemon_abilities (
     poke_id INTEGER, ability_id INTEGER, PRIMARY KEY (poke_id, ability_id), UNIQUE (ability_id, poke_id)
+);
+CREATE TABLE IF NOT EXISTS moves (
+    id INTEGER PRIMARY KEY, name VARCHAR(50) UNIQUE, pp INTEGER, damage NUMERIC, accuracy NUMERIC,
+    type INTEGER REFERENCES types (id) ON DELETE CASCADE, info TEXT
+);
+CREATE TABLE IF NOT EXISTS abilities (id INTEGER PRIMARY KEY, name VARCHAR(50) UNIQUE, info TEXT);
+CREATE TABLE IF NOT EXISTS trainer (
+    id SERIAL PRIMARY KEY, poke_id INTEGER REFERENCES pokedex (id) ON DELETE CASCADE,
+    ability_id INTEGER REFERENCES abilities (id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS trainer_moves (
+    trainer_id INTEGER REFERENCES trainer (id) ON DELETE CASCADE,
+    move_id INTEGER REFERENCES moves (id) ON DELETE CASCADE, PRIMARY KEY (trainer_id, move_id)
 );
 """
 cur.execute(sql)
@@ -186,6 +203,108 @@ for i in range(len(url_paths)):
     cur.execute("INSERT INTO %s VALUES %s;", (AsIs(json_tables[i]), AsIs(values)))
 
 conn.commit()
+
+# Insert data into moves table from js_moves
+sql = r"""
+WITH cte AS (
+    SELECT (body->'id')::int as id, 
+            unnest(translate(jsonb_path_query_array(body->'effect_entries', '$.language.name')::text, 
+                   '[]', '{}')::text[]) as language,
+            unnest(translate(regexp_replace(jsonb_path_query_array(body->'effect_entries', '$.effect')::text, 
+                   '\\n|\\n\\n|\\f|  ', ' ', 'g'), '[]', '{}')::text[]) as effect
+    FROM js_moves
+), rownum AS (
+    SELECT row_number() over(order by (select NULL)) as rn, * FROM cte
+), engchk AS (
+    SELECT row_number() over(partition by id order by rn) as first_eng, * FROM rownum
+), effctb AS (
+    SELECT rank() over(partition by id order by first_eng) as rk, * FROM engchk WHERE language = 'en'
+), cte1 AS (
+    SELECT (body->'id')::int as id, 
+            unnest(translate(jsonb_path_query_array(body->'flavor_text_entries', '$.language.name')::text, 
+                   '[]', '{}')::text[]) as language,
+            unnest(translate(regexp_replace(jsonb_path_query_array(body->'flavor_text_entries', '$.flavor_text')::text, 
+                   '\\n|\\f', ' ', 'g'), '[]', '{}')::text[]) as ftext
+    FROM js_moves
+), rownum1 AS (
+    SELECT row_number() over(order by (select NULL)) as rn, * FROM cte1
+), engchk1 AS (
+    SELECT row_number() over(partition by id order by rn) as first_eng, * FROM rownum1
+), flavtb AS (
+    SELECT rank() over(partition by id order by first_eng) as rk, * FROM engchk1 WHERE language = 'en'
+)
+INSERT INTO moves (id, name, pp, damage, accuracy, type, info)
+SELECT mt.*, coalesce(ft.ftext, et.effect) 
+FROM (
+    SELECT (body->'id')::int as id,
+            body->>'name',
+           (body->'pp')::int,
+            CASE WHEN (body->'power') = 'null' THEN 0 
+                 ELSE (body->'power')::numeric
+            END,
+            CASE WHEN (body->'accuracy') = 'null' THEN 0 
+                 ELSE (body->'accuracy')::numeric
+            END,
+            substring(body->'type'->>'url' from '.+/([0-9]+)/$')::int
+    FROM js_moves
+) AS mt
+LEFT JOIN (SELECT id, ftext FROM flavtb WHERE rk = 1) AS ft
+    ON mt.id = ft.id
+LEFT JOIN (SELECT id, effect FROM effctb WHERE rk = 1) AS et
+    ON mt.id = et.id
+ORDER BY mt.id;
+"""
+cur.execute(sql)
+print(sql)
+
+# Insert data into abilities table from js_abilities
+sql = r"""
+WITH cte AS (
+    SELECT (body->'id')::int as id, 
+            unnest(translate(jsonb_path_query_array(body->'effect_entries', '$.language.name')::text, 
+                   '[]', '{}')::text[]) as language,
+            unnest(translate(regexp_replace(jsonb_path_query_array(body->'effect_entries', '$.effect')::text, 
+                   '\\n|\\n\\n|\\f|  ', ' ', 'g'), '[]', '{}')::text[]) as effect
+    FROM js_abilities
+), rownum AS (
+    SELECT row_number() over(order by (select NULL)) as rn, * FROM cte
+), engchk AS (
+    SELECT row_number() over(partition by id order by rn) as first_eng, * FROM rownum
+), effctb AS (
+    SELECT rank() over(partition by id order by first_eng) as rk, * FROM engchk WHERE language = 'en'
+), cte1 AS (
+    SELECT (body->'id')::int as id, 
+            unnest(translate(jsonb_path_query_array(body->'flavor_text_entries', '$.language.name')::text, 
+                   '[]', '{}')::text[]) as language,
+            unnest(translate(regexp_replace(jsonb_path_query_array(body->'flavor_text_entries', '$.flavor_text')::text, 
+                   '\\n|\\f', ' ', 'g'), '[]', '{}')::text[]) as ftext
+    FROM js_abilities
+), rownum1 AS (
+    SELECT row_number() over(order by (select NULL)) as rn, * FROM cte1
+), engchk1 AS (
+    SELECT row_number() over(partition by id order by rn) as first_eng, * FROM rownum1
+), flavtb AS (
+    SELECT rank() over(partition by id order by first_eng) as rk, * FROM engchk1 WHERE language = 'en'
+)
+INSERT INTO abilities (id, name, info)
+SELECT abt.*, coalesce(ft.ftext, et.effect) 
+FROM (
+    SELECT (body->'id')::int as id,
+            body->>'name'
+    FROM js_abilities
+) AS abt
+LEFT JOIN (SELECT id, ftext FROM flavtb WHERE rk = 1) AS ft
+    ON abt.id = ft.id
+LEFT JOIN (SELECT id, effect FROM effctb WHERE rk = 1) AS et
+    ON abt.id = et.id
+ORDER BY abt.id;
+"""
+cur.execute(sql)
+print(sql)
+
+conn.commit()
+
+# Add remaining foreign keys and create GIN indexes on text/text[] columns
 
 cur.close()
 conn.close()
