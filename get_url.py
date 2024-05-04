@@ -34,7 +34,7 @@ def get_url(url_path, index=None):
         else:
             iterable = range(1, index + 1)
 
-        with FuturesSession(max_workers=10) as session:
+        with FuturesSession(max_workers=50) as session:
             for i in iterable:
                 url = url_path + str(i)
                 future = session.get(url)

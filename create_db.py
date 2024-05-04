@@ -24,13 +24,13 @@ DROP TABLE IF EXISTS js_types;
 DROP TABLE IF EXISTS js_evo;
 DROP TABLE IF EXISTS js_moves;
 DROP TABLE IF EXISTS js_abilities;
-DROP TABLE IF EXISTS pokedex;
-DROP TABLE IF EXISTS types;
+DROP TABLE IF EXISTS pokedex CASCADE;
+DROP TABLE IF EXISTS types CASCADE;
 DROP TABLE IF EXISTS pokemon_moves;
 DROP TABLE IF EXISTS pokemon_abilities;
-DROP TABLE IF EXISTS moves;
-DROP TABLE IF EXISTS abilities;
-DROP TABLE IF EXISTS trainer;
+DROP TABLE IF EXISTS moves CASCADE;
+DROP TABLE IF EXISTS abilities CASCADE;
+DROP TABLE IF EXISTS trainer CASCADE;
 DROP TABLE IF EXISTS trainer_moves;
 """
 cur.execute(sql)
@@ -305,6 +305,20 @@ print(sql)
 conn.commit()
 
 # Add remaining foreign keys and create GIN indexes on text/text[] columns
+sql = r"""
+ALTER TABLE pokemon_moves ADD FOREIGN KEY (poke_id) REFERENCES pokedex (id) ON DELETE CASCADE;
+ALTER TABLE pokemon_moves ADD FOREIGN KEY (move_id) REFERENCES moves (id) ON DELETE CASCADE;
+ALTER TABLE pokemon_abilities ADD FOREIGN KEY (poke_id) REFERENCES pokedex (id) ON DELETE CASCADE;
+ALTER TABLE pokemon_abilities ADD FOREIGN KEY (ability_id) REFERENCES abilities (id) ON DELETE CASCADE;
+CREATE INDEX gin_pd_type ON pokedex USING gin (type array_ops);
+CREATE INDEX gin_pd_info ON pokedex USING gin (to_tsvector('english', info));    
+CREATE INDEX gin_mv_info ON moves USING gin (to_tsvector('english', info));    
+CREATE INDEX gin_ab_info ON abilities USING gin (to_tsvector('english', info));    
+"""
+cur.execute(sql)
+print(sql)
+
+conn.commit()
 
 cur.close()
 conn.close()
