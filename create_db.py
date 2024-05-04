@@ -239,10 +239,10 @@ FROM (
     SELECT (body->'id')::int as id,
             body->>'name',
            (body->'pp')::int,
-            CASE WHEN (body->'power') = 'null' THEN 0 
+            CASE WHEN (body->'power') = 'null' THEN NULL 
                  ELSE (body->'power')::numeric
             END,
-            CASE WHEN (body->'accuracy') = 'null' THEN 0 
+            CASE WHEN (body->'accuracy') = 'null' THEN NULL 
                  ELSE (body->'accuracy')::numeric
             END,
             substring(body->'type'->>'url' from '.+/([0-9]+)/$')::int
