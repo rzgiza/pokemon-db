@@ -74,7 +74,7 @@ class TrainerPack:
 
     def get_move_count(self, conn_cur=None):
         """Get trainer move count for each Pokemon. -> count as default dictionary."""
-        count_dd = defaultdict()
+        count_dd = defaultdict(int)
         sql = r"SELECT trainer_id, count(move_id) FROM trainer_moves GROUP BY trainer_id;"
         if conn_cur is None:
             with self.pgsql_connection as conn_cur:
@@ -87,6 +87,7 @@ class TrainerPack:
             count_list = conn_cur[1].fetchall()
             for id_count in count_list:
                 count_dd[id_count[0]] = id_count[1]
+        count_dd[0] = 0
         return count_dd
 
     def show_pokemon(self):
