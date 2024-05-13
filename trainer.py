@@ -1,5 +1,6 @@
 # Perform CRUD operations on trainer and trainer_moves tables in Pokemon database.
 import psycopg2
+from psycopg2.extensions import AsIs
 import pandas as pd
 from collections import defaultdict
 
@@ -90,10 +91,37 @@ class TrainerPack:
         count_dd[0] = 0
         return count_dd
 
-    def show_pokemon(self):
-        """Show list of Pokemon id, names and info. -> pd dataframe."""
+    def insert_trainer(self, poke_ability):
+        """Insert values into trainer table. Pass list of poke_id, ability_id integer tuples. Use None to pass a NULL
+        value inside a tuple (for ability_id column)."""
         with self.pgsql_connection as conn_cur:
-            sql = r"SELECT id, name, info FROM pokedex;"
+            values = ','.join([conn_cur[1].mogrify("(%s,%s)", tup).decode('utf-8') for tup in poke_ability])
+            conn_cur[1].execute("INSERT INTO %s VALUES %s;", (AsIs('trainer (poke_id, ability_id)'), AsIs(values)))
+
+    def insert_moves(self, trainer_move):
+        """Insert values into trainer_moves table. Pass list of trainer_id, move_id integer tuples."""
+        with self.pgsql_connection as conn_cur:
+            values = ','.join([conn_cur[1].mogrify("(%s,%s)", tup).decode('utf-8') for tup in trainer_move])
+            conn_cur[1].execute("INSERT INTO %s VALUES %s;", (AsIs('trainer_moves'), AsIs(values)))
+
+    def trunc_trainer(self):
+        """Truncate trainer table and restarts serial count at 1 for id column.
+        Cascade will propagate truncate to all tables with a foreign key reference
+        to the trainer table (so the trainer_moves table will also be truncated)."""
+        sql = r"TRUNCATE TABLE trainer RESTART IDENTITY CASCADE;"
+        with self.pgsql_connection as conn_cur:
+            conn_cur[1].execute(sql)
+
+    def trunc_moves(self):
+        """Truncate trainer_moves table."""
+        sql = r"TRUNCATE TABLE trainer_moves;"
+        with self.pgsql_connection as conn_cur:
+            conn_cur[1].execute(sql)
+
+    def show_pokemon(self):
+        """Show list of Pokemon id, names and info from pokedex table. -> pd dataframe."""
+        sql = r"SELECT id, name, info FROM pokedex;"
+        with self.pgsql_connection as conn_cur:
             conn_cur[1].execute(sql)
             pokemon = conn_cur[1].fetchall()
             pokemon = pd.DataFrame(pokemon, columns=['id', 'name', 'info'])
