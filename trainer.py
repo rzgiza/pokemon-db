@@ -43,12 +43,12 @@ class TrainerPack:
         self.pgsql_connection = pgsql_connection
         with self.pgsql_connection as conn_cur:
             self.trainer_count = self.get_trainer_count(conn_cur)
-            self.move_count_dd = self.get_move_count(conn_cur)
+            self.moves_count = self.get_moves_count(conn_cur)
         print("Current trainer Pokemon count is:", self.trainer_count)
-        print("Current trainer move count is:", self.move_count_dd)
+        print("Current trainer move count is:", self.moves_count)
         if self.trainer_count > TrainerPack.MAX_POKEMON:
             print("Warning: Change has caused current number of trainer pokemon to exceed MAX_POKEMON =", TrainerPack.MAX_POKEMON)
-        if max(self.move_count_dd.values()) > TrainerPack.MAX_MOVES:
+        if max(self.moves_count.values()) > TrainerPack.MAX_MOVES:
             print("Warning: Change has caused current number of trainer moves to exceed MAX_MOVES =", TrainerPack.MAX_MOVES)
 
     @classmethod
@@ -73,9 +73,10 @@ class TrainerPack:
             count = conn_cur[1].fetchall()[0][0]
         return count
 
-    def get_move_count(self, conn_cur=None):
+    def get_moves_count(self, conn_cur=None):
         """Get trainer move count for each Pokemon. -> count as default dictionary."""
         count_dd = defaultdict(int)
+        count_dd[0] = 0
         sql = r"SELECT trainer_id, count(move_id) FROM trainer_moves GROUP BY trainer_id;"
         if conn_cur is None:
             with self.pgsql_connection as conn_cur:
@@ -88,7 +89,6 @@ class TrainerPack:
             count_list = conn_cur[1].fetchall()
             for id_count in count_list:
                 count_dd[id_count[0]] = id_count[1]
-        count_dd[0] = 0
         return count_dd
 
     def insert_trainer(self, poke_ability):
@@ -111,12 +111,17 @@ class TrainerPack:
         sql = r"TRUNCATE TABLE trainer RESTART IDENTITY CASCADE;"
         with self.pgsql_connection as conn_cur:
             conn_cur[1].execute(sql)
+        self.trainer_count = 0
+        self.moves_count.clear()
+        self.moves_count[0] = 0
 
     def trunc_moves(self):
         """Truncate trainer_moves table."""
         sql = r"TRUNCATE TABLE trainer_moves;"
         with self.pgsql_connection as conn_cur:
             conn_cur[1].execute(sql)
+        self.moves_count.clear()
+        self.moves_count[0] = 0
 
     def show_pokemon(self):
         """Show list of Pokemon id, names and info from pokedex table. -> pd dataframe."""
