@@ -1,6 +1,7 @@
 # Perform CRUD operations on trainer and trainer_moves tables in Pokemon database.
 import psycopg2
 import pandas as pd
+from collections import defaultdict
 
 
 class PGSQLConnection:
@@ -32,17 +33,22 @@ class PGSQLConnection:
 
 class TrainerPack:
     """Handles postgres connection (from PGSQLConnection) using with statements
-    to perform CRUD operations on the Pokemon database created in create_db.py."""
+    to perform CRUD operations on the Pokemon database from create_db.py."""
     MAX_POKEMON = 6
     MAX_MOVES = 4
 
     def __init__(self, pgsql_connection):
-        """Pass PGSQLConnection object."""
+        """Pass PGSQLConnection object. Initialize count data attributes."""
         self.pgsql_connection = pgsql_connection
-        self.trainer_count = self.get_trainer_count()
+        with self.pgsql_connection as conn_cur:
+            self.trainer_count = self.get_trainer_count(conn_cur)
+            self.move_count_dd = self.get_move_count(conn_cur)
         print("Current trainer Pokemon count is:", self.trainer_count)
+        print("Current trainer move count is:", self.move_count_dd)
         if self.trainer_count > TrainerPack.MAX_POKEMON:
             print("Warning: Change has caused current number of trainer pokemon to exceed MAX_POKEMON =", TrainerPack.MAX_POKEMON)
+        if max(self.move_count_dd.values()) > TrainerPack.MAX_MOVES:
+            print("Warning: Change has caused current number of trainer moves to exceed MAX_MOVES =", TrainerPack.MAX_MOVES)
 
     @classmethod
     def change_trainer_max(cls, new_max):
@@ -54,16 +60,37 @@ class TrainerPack:
         """Change the default max number of Pokemon moves for the trainer_moves table."""
         cls.MAX_MOVES = new_max
 
-    def get_trainer_count(self):
-        """Get number of pokemon in trainer table. -> count as int."""
-        with self.pgsql_connection as conn_cur:
-            sql = r"SELECT count(*) FROM trainer;"
+    def get_trainer_count(self, conn_cur=None):
+        """Get number of Pokemon in trainer table. -> count as int."""
+        sql = r"SELECT count(*) FROM trainer;"
+        if conn_cur is None:
+            with self.pgsql_connection as conn_cur:
+                conn_cur[1].execute(sql)
+                count = conn_cur[1].fetchall()[0][0]
+        else:
             conn_cur[1].execute(sql)
             count = conn_cur[1].fetchall()[0][0]
-            return count
+        return count
+
+    def get_move_count(self, conn_cur=None):
+        """Get trainer move count for each Pokemon. -> count as default dictionary."""
+        count_dd = defaultdict()
+        sql = r"SELECT trainer_id, count(move_id) FROM trainer_moves GROUP BY trainer_id;"
+        if conn_cur is None:
+            with self.pgsql_connection as conn_cur:
+                conn_cur[1].execute(sql)
+                count_list = conn_cur[1].fetchall()
+                for id_count in count_list:
+                    count_dd[id_count[0]] = id_count[1]
+        else:
+            conn_cur[1].execute(sql)
+            count_list = conn_cur[1].fetchall()
+            for id_count in count_list:
+                count_dd[id_count[0]] = id_count[1]
+        return count_dd
 
     def show_pokemon(self):
-        """Show list of pokemon id, names and info. -> pd dataframe."""
+        """Show list of Pokemon id, names and info. -> pd dataframe."""
         with self.pgsql_connection as conn_cur:
             sql = r"SELECT id, name, info FROM pokedex;"
             conn_cur[1].execute(sql)
@@ -80,5 +107,5 @@ if __name__ == "__main__":
     secrets = hidden.secrets()
     pgsql_conn = PGSQLConnection(host=secrets['host'], port=secrets['port'], database=secrets['database'],
                                  user=secrets['user'], password=secrets['pass'])
-    tr_pack = TrainerPack(pgsql_connection=pgsql_conn)
+    tp = TrainerPack(pgsql_connection=pgsql_conn)
 
