@@ -94,9 +94,13 @@ class TrainerPack:
     def insert_trainer(self, poke_ability):
         """Insert values into trainer table. Pass list of poke_id, ability_id integer tuples. Use None to pass a NULL
         value inside a tuple (for ability_id column)."""
-        with self.pgsql_connection as conn_cur:
-            values = ','.join([conn_cur[1].mogrify("(%s,%s)", tup).decode('utf-8') for tup in poke_ability])
-            conn_cur[1].execute("INSERT INTO %s VALUES %s;", (AsIs('trainer (poke_id, ability_id)'), AsIs(values)))
+        if self.trainer_count + len(poke_ability) > TrainerPack.MAX_POKEMON:
+            print("No values were inserted. Total rows in trainer table would exceed MAX_POKEMON =", TrainerPack.MAX_POKEMON)
+        else:
+            with self.pgsql_connection as conn_cur:
+                values = ','.join([conn_cur[1].mogrify("(%s,%s)", tup).decode('utf-8') for tup in poke_ability])
+                conn_cur[1].execute("INSERT INTO %s VALUES %s;", (AsIs('trainer (poke_id, ability_id)'), AsIs(values)))
+            self.trainer_count += len(poke_ability)
 
     def insert_moves(self, trainer_move):
         """Insert values into trainer_moves table. Pass list of trainer_id, move_id integer tuples."""
