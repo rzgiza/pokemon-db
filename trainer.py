@@ -95,7 +95,8 @@ class TrainerPack:
         """Insert values into trainer table. Pass list of poke_id, ability_id integer tuples. Use None to pass a NULL
         value inside a tuple (for ability_id column)."""
         if self.trainer_count + len(poke_ability) > TrainerPack.MAX_POKEMON:
-            print("No values were inserted. Total rows in trainer table would exceed MAX_POKEMON =", TrainerPack.MAX_POKEMON)
+            print("No values were inserted. Total Pokemon in trainer table would exceed MAX_POKEMON =",
+                  str(TrainerPack.MAX_POKEMON) + ".")
         else:
             with self.pgsql_connection as conn_cur:
                 values = ','.join([conn_cur[1].mogrify("(%s,%s)", tup).decode('utf-8') for tup in poke_ability])
@@ -104,9 +105,17 @@ class TrainerPack:
 
     def insert_moves(self, trainer_move):
         """Insert values into trainer_moves table. Pass list of trainer_id, move_id integer tuples."""
-        with self.pgsql_connection as conn_cur:
-            values = ','.join([conn_cur[1].mogrify("(%s,%s)", tup).decode('utf-8') for tup in trainer_move])
-            conn_cur[1].execute("INSERT INTO %s VALUES %s;", (AsIs('trainer_moves'), AsIs(values)))
+        temp = self.moves_count.copy()
+        for tup in trainer_move:
+            temp[tup[0]] += 1
+        if max(temp.values()) > TrainerPack.MAX_MOVES:
+            print("No values were inserted. Total moves (for at least one Pokemon) in trainer_moves table would exceed "
+                  "MAX_MOVES =", str(TrainerPack.MAX_MOVES) + ".")
+        else:
+            with self.pgsql_connection as conn_cur:
+                values = ','.join([conn_cur[1].mogrify("(%s,%s)", tup).decode('utf-8') for tup in trainer_move])
+                conn_cur[1].execute("INSERT INTO %s VALUES %s;", (AsIs('trainer_moves'), AsIs(values)))
+            self.moves_count = temp
 
     def trunc_trainer(self):
         """Truncate trainer table and restarts serial count at 1 for id column.
