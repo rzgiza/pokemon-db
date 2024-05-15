@@ -44,8 +44,6 @@ class TrainerPack:
         with self.pgsql_connection as conn_cur:
             self.trainer_count = self.get_trainer_count(conn_cur)
             self.moves_count = self.get_moves_count(conn_cur)
-        print("Current trainer Pokemon count is:", self.trainer_count)
-        print("Current trainer move count is:", self.moves_count)
         if self.trainer_count > TrainerPack.MAX_POKEMON:
             print("Warning: Change has caused current number of trainer pokemon to exceed MAX_POKEMON =", TrainerPack.MAX_POKEMON)
         if max(self.moves_count.values()) > TrainerPack.MAX_MOVES:
@@ -82,13 +80,11 @@ class TrainerPack:
             with self.pgsql_connection as conn_cur:
                 conn_cur[1].execute(sql)
                 count_list = conn_cur[1].fetchall()
-                for id_count in count_list:
-                    count_dd[id_count[0]] = id_count[1]
         else:
             conn_cur[1].execute(sql)
             count_list = conn_cur[1].fetchall()
-            for id_count in count_list:
-                count_dd[id_count[0]] = id_count[1]
+        for id_count in count_list:
+            count_dd[id_count[0]] = id_count[1]
         return count_dd
 
     def insert_trainer(self, poke_ability):
@@ -142,8 +138,8 @@ class TrainerPack:
         with self.pgsql_connection as conn_cur:
             conn_cur[1].execute(sql)
             pokemon = conn_cur[1].fetchall()
-            pokemon = pd.DataFrame(pokemon, columns=['id', 'name', 'info'])
-            return pokemon
+        pokemon = pd.DataFrame(pokemon, columns=['id', 'name', 'info'])
+        return pokemon
 
 
 # Code to run when module runs as main. Does not run when module is imported.
