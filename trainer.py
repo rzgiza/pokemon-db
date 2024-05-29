@@ -132,14 +132,13 @@ class TrainerPack:
         self.moves_count.clear()
         self.moves_count[0] = 0
 
-    def show_pokemon(self):
-        """Show list of Pokemon id, names and info from pokedex table. -> pd dataframe."""
-        sql = r"SELECT id, name, info FROM pokedex;"
+    def get_select(self, sql):
+        """Pass SQL select statement and get results. Pass SQL text as raw string (r"<sql>"). -> pd dataframe."""
         with self.pgsql_connection as conn_cur:
             conn_cur[1].execute(sql)
-            pokemon = conn_cur[1].fetchall()
-        pokemon = pd.DataFrame(pokemon, columns=['id', 'name', 'info'])
-        return pokemon
+            data = conn_cur[1].fetchall()
+        data = pd.DataFrame(data)
+        return data
 
 
 # Code to run when module runs as main. Does not run when module is imported.
