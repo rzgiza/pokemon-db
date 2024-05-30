@@ -9,6 +9,7 @@ conn = psycopg2.connect(host=secrets['host'], port=secrets['port'], database=sec
                         user=secrets['user'], password=secrets['pass'], connect_timeout=3)
 cur = conn.cursor()
 
+# Drop all tables created in create_db.py
 sql = r"""
 DROP TABLE IF EXISTS js_pokemon;
 DROP TABLE IF EXISTS js_species;
