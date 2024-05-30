@@ -1,4 +1,7 @@
 # Perform CRUD operations on trainer and trainer_moves tables in Pokemon database.
+# PGSQLConnection class sets up the connection to be open and closed using with statements.
+# TrainerPack class uses PGSQLConnection object to perform CRUD operations on Pokemon database.
+# Running module as main will truncate the trainer/trainer_moves tables and create the default setup for those tables.
 import psycopg2
 from psycopg2.extensions import AsIs
 import pandas as pd
@@ -145,9 +148,10 @@ class TrainerPack:
 # Used to create a quick random setup of trainer and trainer_moves.
 if __name__ == "__main__":
     import hidden
-    print("Running as main.")
     secrets = hidden.secrets()
     pgsql_conn = PGSQLConnection(host=secrets['host'], port=secrets['port'], database=secrets['database'],
                                  user=secrets['user'], password=secrets['pass'])
     tp = TrainerPack(pgsql_connection=pgsql_conn)
-
+    tp.trunc_trainer()
+    tp.insert_trainer([(65, 39)])
+    tp.insert_moves([(1, 347)])
