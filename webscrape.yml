@@ -1,0 +1,11 @@
+name: webscrape
+channels:
+  - defaults
+dependencies:
+  - psycopg2=2.9.3
+  - ipykernel=6.28.0
+  - python=3.10.13
+  - pandas=2.1.4
+  - pip:
+    - requests-futures=1.0.1
+
