@@ -320,6 +320,22 @@ print(sql)
 
 conn.commit()
 
+# The json tables used to dump the data into are no longer required but are not dropped by default.
+# To drop the json tables created in this program simply uncomment the lines of code below by deleting the "# " portion.
+
+# sql = r"""
+# DROP TABLE IF EXISTS js_pokemon;
+# DROP TABLE IF EXISTS js_species;
+# DROP TABLE IF EXISTS js_types;
+# DROP TABLE IF EXISTS js_evo;
+# DROP TABLE IF EXISTS js_moves;
+# DROP TABLE IF EXISTS js_abilities;
+# """
+# cur.execute(sql)
+# print(sql)
+#
+# conn.commit()
+
 cur.close()
 conn.close()
 print("Connection closed to PGSQL database.")
