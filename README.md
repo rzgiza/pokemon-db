@@ -8,7 +8,7 @@ from the API and insert the results into your chosen PostgreSQL database. A diag
 found [here](https://github.com/rzgiza/pokemon-db/blob/main/pokemon_db.pdf).
 
 ## Getting Started
-The workflow demonstrated below uses a Linux terminal to set up and run the project with command line arguments. 
+The workflow demonstrated below uses a Linux terminal to set up and run the project from the command line. 
 It also uses the conda package manager to create an environment called *webscrape* that has all the necessary 
 dependencies. Note that this project has been tested on PostgreSQL versions 16.2 and 14.3.
 
