@@ -178,7 +178,7 @@ Here are a some resources I found useful while working with PostgreSQL and Pytho
    
    - Open the *pg_ident.conf* file and edit it to map your system user name to the desired Postgres user name.
    - Open the *pg_hba.conf* file and edit it to add the Postgres user name with "method = md5" (instead of "method = peer" worked for me).
-   - Finally, `[postgres@fedora ~] systemctl restart postgresql-16` (or whatever version you have).
+   - Finally, `[postgres@fedora ~]$ systemctl restart postgresql-16` (or whatever version you have).
 
    Now you should be able to enter the database as the user.
    
