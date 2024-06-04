@@ -26,7 +26,7 @@ postgres=# \q
 [postgres@fedora ~]$ exit
 logout
 ```
-Next switch into the directory where you wish to clone the *pokemon-db* repository.
+Next, switch into the directory where you wish to clone the *pokemon-db* repository.
 ```console
 [rob@fedora ~]$ cd Dev
 [rob@fedora Dev]$ git clone https://github.com/rzgiza/pokemon-db.git
@@ -77,7 +77,7 @@ With the environment still active, execute the *create_db.py* file using Python.
 ```
 There will be output displaying the asynchronous requests. Note that the request ids are not sequentially ordered. Finally, run the
 *trainer* module as main to finish the database by inserting some random input into the **trainer** and **trainer_moves** tables. The *trainer* 
-module also provides additional functionality that can be used when imported. 
+module also provides additional functionality when it is imported. 
 ```console
 (webscrape) [rob@fedora pokemon-db]$ python -m trainer
 (webscrape) [rob@fedora pokemon-db]$ conda deactivate
@@ -167,7 +167,7 @@ Here are a some resources I found useful while working with PostgreSQL and Pytho
 
 1. Peer Authentication Error
    
-   When first setting up Postgres, you login as the superuser to create a user with their own password `postgres=# CREATE USER rob WITH PASSWORD 'user_password';`    and create a database with the user as the owner `postgres=# CREATE DATABASE pokemon WITH OWNER rob;`. When attempting to enter the database as the user           `[postgres@fedora ~]$ psql pokemon rob` you may encounter a "peer authentication error". You will need to edit a few lines in the *pg_ident.conf* and              *pg_hba.conf* Postgres files. Their locations can be found with
+   When first setting up Postgres you login as the superuser to create a user with their own password `postgres=# CREATE USER rob WITH PASSWORD 'user_password';`     and create a database with the user as the owner `postgres=# CREATE DATABASE pokemon WITH OWNER rob;`. When attempting to enter the database as the user           `[postgres@fedora ~]$ psql pokemon rob` you may encounter a "peer authentication error". You will need to edit a few lines in the *pg_ident.conf* and              *pg_hba.conf* Postgres files. Their locations can be found with
    
    - `postgres=# SHOW ident_file;`
    - `postgres=# SHOW hba_file;`
@@ -185,7 +185,7 @@ Here are a some resources I found useful while working with PostgreSQL and Pytho
 2. Ident Authentication Error
 
    The module *create_db* uses psycopg2 to make a connection from Python to your PostgreSQL server. For users connecting from certain hosts Postgres defines          "Ident" as the protocol used to connect to the database. Since *create_db* attempts to use your user password to make the connection, you may encounter an
-   "Ident authentication error" when attempting to run *create_db* with `(webscrape) [rob@fedora pokemon-db]$ python create_db.py`. To avoid this issue open
+   "Ident authentication error" when running *create_db* with `(webscrape) [rob@fedora pokemon-db]$ python create_db.py`. To avoid this issue open
    the *pg_hba.conf* file and edit the appropriate line (different from the edit in [1]) to change the method from "ident" to "md5". A thorough discussion can
    be found [here](https://serverfault.com/questions/406606/postgres-error-message-fatal-ident-authentication-failed-for-user) (look at solution #4). 
    
