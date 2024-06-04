@@ -5,7 +5,9 @@ The database is created by scraping JSON data from the https://pokeapi.co API an
 into a relational format. The main file for the project is *create_db.py*, which uses 
 [*requests-futures*](https://github.com/ross/requests-futures/tree/main) and *psycopg2* to make asynchronous requests 
 from the API and insert the results into your chosen PostgreSQL database. A diagram for the schema can be 
-found [here](https://github.com/rzgiza/pokemon-db/blob/main/pokemon_db.pdf).
+found below.
+
+![pokemon-db](/images/pokemon_db.jpg?raw=true "Pokemon-DB")
 
 ## Getting Started
 The workflow demonstrated below uses a Linux terminal to set up and run the project from the command line. 
