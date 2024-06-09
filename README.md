@@ -171,7 +171,7 @@ Here are a some resources I found useful while working with PostgreSQL and Pytho
    
    When first setting up Postgres, you log in as the superuser to create a user with their own password
    `postgres=# CREATE USER rob WITH PASSWORD 'user_password';` and create a database with the user as the owner
-   `postgres=# CREATE DATABASE pokemon WITH OWNER rob;`. When attempting to enter the database as the user `[postgres@fedora ~]$ psql pokemon rob` you may
+   `postgres=# CREATE DATABASE pokemon WITH OWNER rob;`. When attempting to enter the database as the user `[postgres@fedora ~]$ psql pokemon rob`, you may
    encounter a "peer authentication error". You will need to edit a few lines in the *pg_ident.conf* and *pg_hba.conf* Postgres files.
    Their locations can be  found with
    
