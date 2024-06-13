@@ -79,7 +79,7 @@ With the environment still active, execute the *create_db.py* file using Python.
 ```
 There will be output displaying the asynchronous requests. Note that the request ids are not sequentially ordered. Finally, run the
 *trainer* module as main to finish the database by inserting some random input into the **trainer** and **trainer_moves** tables. The *trainer* 
-module also provides additional functionality when it is imported. 
+module also provides additional functionality when it is imported (example [here](https://github.com/rzgiza/pokemon-db/blob/main/trainer_example.ipynb)). 
 ```console
 (webscrape) [rob@fedora pokemon-db]$ python -m trainer
 (webscrape) [rob@fedora pokemon-db]$ conda deactivate
