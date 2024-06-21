@@ -190,7 +190,7 @@ Here are a some resources I found useful while working with PostgreSQL and Pytho
    
 2. Ident Authentication Error
 
-   The module *create_db* uses psycopg2 to make a connection from Python to your PostgreSQL server. For users connecting from certain hosts Postgres defines          "Ident" as the protocol used to connect to the database. Since *create_db* attempts to use your user password to make the connection, you may encounter an
+   The module *create_db* uses psycopg2 to make a connection from Python to your PostgreSQL server. For users connecting from certain hosts, Postgres defines         "Ident" as the protocol used to connect to the database. Since *create_db* attempts to use your user password to make the connection, you may encounter an
    "Ident authentication error" when running *create_db* with `(webscrape) [rob@fedora pokemon-db]$ python create_db.py`. To avoid this issue, open
    the *pg_hba.conf* file and edit the appropriate line (different from the edit in [1]) to change the method from "ident" to "md5". A thorough discussion can
    be found [here](https://serverfault.com/questions/406606/postgres-error-message-fatal-ident-authentication-failed-for-user) (look at solution #4). 
