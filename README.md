@@ -5,7 +5,7 @@ The database is created by scraping JSON data from the https://pokeapi.co API an
 into a relational format. The main file for the project is *create_db.py*, which uses 
 [*requests-futures*](https://github.com/ross/requests-futures/tree/main) and *psycopg2* to make asynchronous requests 
 from the API and insert the results into your chosen PostgreSQL database. A diagram for the schema can be 
-found below.
+found below. Also, the data in the "pokedex" table can be found on [Kaggle](https://www.kaggle.com/datasets/rzgiza/pokdex-for-all-1025-pokemon-w-text-description).
 
 ![Pokemon DB](/images/pokemon_db.jpg?raw=true "Pokemon-DB")
 
